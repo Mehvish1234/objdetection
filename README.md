@@ -84,7 +84,7 @@ FalconVision is an intelligent object detection system designed to help astronau
 ## 📊 Model Performance
 
 ### Metrics (mAP@00.5916)
-- **Precision**: 0.943 **Recall**: 0.881- **mAP50*: 0.916
+- **Precision**: 0.943 **Recall**: 0.881- **mAP50*: **0.916**
 - **mAP50: 0.83s-wise Performance
 | Class | Precision | Recall | mAP50 |
 |-------|-----------|--------|-------|
