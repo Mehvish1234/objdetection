@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FalconVision - Space Station Object Detector</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary: #1e2a38;
+      --accent: #00b4d8;
+      --bg: #101820;
+      --card-bg: #1a2636;
+      --text: #f1f6fa;
+      --muted: #b0b8c1;
+      --shadow: 0 4px 24px #0004;
+    }
+    body {
+      margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column;
+    }
+    .navbar {
+      background: var(--primary); color: var(--text); display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 2rem; box-shadow: var(--shadow);
+    }
+    .navbar .logo {
+      display: flex; align-items: center; font-size: 1.5rem; font-weight: bold; letter-spacing: 1px;
+    }
+    .navbar .logo span {
+      margin-left: 0.7rem; color: var(--accent);
+    }
+    .nav-links {
+      display: flex; gap: 1.5rem;
+    }
+    .nav-link {
+      color: var(--text); text-decoration: none; font-size: 1.1rem; cursor: pointer; padding: 0.3rem 0.7rem; border-radius: 5px; transition: background 0.2s;
+    }
+    .nav-link.active, .nav-link:hover {
+      background: var(--accent); color: #fff;
+    }
+    main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .card {
+      background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow); padding: 2.5rem 2.5rem; margin: 2.5rem 0; min-width: 340px; max-width: 95vw;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    label { font-size: 1.15rem; margin-bottom: 0.7rem; display: block; color: var(--muted); }
+    input[type="file"] { display: none; }
+    .file-label { display: inline-block; background: var(--accent); color: #fff; padding: 0.8rem 1.7rem; border-radius: 7px; cursor: pointer; margin-bottom: 0.7rem; font-weight: 500; font-size: 1.05rem; transition: background 0.2s; }
+    .file-label:hover { background: #0096c7; }
+    .file-name { font-size: 1rem; color: var(--muted); margin-bottom: 1.2rem; }
+    button { background: var(--primary); color: #fff; border: none; padding: 0.8rem 1.7rem; border-radius: 7px; font-size: 1.05rem; cursor: pointer; font-weight: 500; transition: background 0.2s, color 0.2s; }
+    button:disabled { background: #444a; color: #888; cursor: not-allowed; }
+    button:not(:disabled):hover { background: var(--accent); color: #fff; }
+    .loader { margin: 1.5rem 0; font-size: 1.1rem; color: var(--accent); }
+    .results { margin-top: 2rem; text-align: center; }
+    .results img { max-width: 350px; border-radius: 10px; margin: 0.5rem 0; box-shadow: 0 2px 12px #0003; }
+    .download-btn { margin-top: 1rem; background: var(--accent); }
+    .about-section {
+      background: var(--card-bg); color: var(--text); border-radius: 16px; box-shadow: var(--shadow); padding: 2.5rem 2.5rem; margin: 2.5rem 0; max-width: 700px; width: 95vw;
+      display: flex; flex-direction: column; align-items: flex-start;
+    }
+    .about-section h2 { margin-top: 0; color: var(--accent); }
+    .about-section ul { margin-top: 0.5rem; margin-bottom: 1.5rem; }
+    .about-section li { margin-bottom: 0.7rem; }
+    .about-section .example { background: #0a2233; color: #b0eaff; border-left: 4px solid var(--accent); padding: 0.7rem 1rem; border-radius: 7px; margin-bottom: 1.2rem; }
+    .about-section .mission { font-size: 1.08rem; color: var(--muted); margin-bottom: 1.2rem; }
+    footer { text-align: center; font-size: 0.98rem; color: #b0b8c1; margin: 2rem 0 1rem 0; }
+    @media (max-width: 600px) {
+      .card, .about-section { padding: 1.2rem 0.7rem; }
+      .navbar { flex-direction: column; gap: 0.7rem; padding: 1rem 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#00b4d8"/><path d="M16 7L19.09 13.26L26 14.27L21 19.14L22.18 26.02L16 22.77L9.82 26.02L11 19.14L6 14.27L12.91 13.26L16 7Z" fill="#fff"/></svg>
+      <span>FalconVision</span>
+    </div>
+    <div class="nav-links">
+      <a class="nav-link active" id="nav-detector">Detector</a>
+      <a class="nav-link" id="nav-about">About Falcon</a>
+    </div>
+  </nav>
+  <main>
+    <section id="detector-section">
+      <div class="card">
+        <label for="image-upload">Upload an image from the space station environment</label>
+        <label class="file-label" for="image-upload">Choose Image</label>
+        <input type="file" id="image-upload" accept=".jpg,.jpeg,.png" />
+        <div class="file-name" id="file-name"></div>
+        <button id="detect-btn" disabled>Detect Objects</button>
+        <div class="loader" id="loader" style="display:none;">🔎 Detecting objects...</div>
+      </div>
+      <div class="results" id="results" style="display:none;">
+        <h3>Detection Results</h3>
+        <div>
+          <div>Original Image:</div>
+          <img id="original-img" src="" alt="Original" />
+        </div>
+        <div>
+          <div>Detected Image:</div>
+          <img id="detected-img" src="" alt="Detected" />
+        </div>
+        <button class="download-btn" id="download-btn" style="display:none;">Download Annotated Image</button>
+      </div>
+    </section>
+    <section id="about-section" class="about-section" style="display:none;">
+      <h2>About Falcon & Model Maintenance</h2>
+      <div class="mission">
+        <b>Mission:</b> FalconVision empowers astronauts and ground control to instantly detect and locate critical safety equipment in the space station, ensuring safety and operational efficiency.
+      </div>
+      <ul>
+        <li><b>Real-World Application:</b> Upload images from the station to detect FireExtinguishers, ToolBoxes, and OxygenTanks. Use results for safety checks, inventory, and emergency response.</li>
+        <li><b>Accessible Anywhere:</b> FalconVision runs in any modern browser on computer or phone—no installation needed.</li>
+      </ul>
+      <h3>How Falcon Maintains the Model</h3>
+      <ul>
+        <li><b>Continuous Updates:</b> Users can flag incorrect detections or upload new images where the model fails. These are collected for review and annotation.</li>
+        <li><b>Retraining Pipeline:</b> New annotated images are periodically added to the training dataset. Falcon can trigger automated retraining of the YOLOv8 model using the updated dataset. The improved model is then deployed to the app.</li>
+        <li><b>Adapting to Change:</b> If a new object is introduced or an existing object changes its appearance (e.g., a FireExtinguisher with a new color), users upload new images. Falcon retrains the model to recognize the new or changed object, ensuring continued accuracy.</li>
+      </ul>
+      <div class="example">
+        <b>Example:</b> If a detected object changes its look or a new object causes confusion, Falcon collects new images, updates the dataset, retrains the model, and deploys the improved version—so the app always stays current with the environment.
+      </div>
+      <p style="font-size:0.97em;color:#b0b8c1;">See the project report for more details and a demonstration video in the submission folder.</p>
+    </section>
+  </main>
+  <footer>
+    Built using Falcon synthetic data by Duality AI
+  </footer>
+  <script>
+    // Navigation logic
+    const navDetector = document.getElementById('nav-detector');
+    const navAbout = document.getElementById('nav-about');
+    const detectorSection = document.getElementById('detector-section');
+    const aboutSection = document.getElementById('about-section');
+    navDetector.onclick = function() {
+      navDetector.classList.add('active');
+      navAbout.classList.remove('active');
+      detectorSection.style.display = '';
+      aboutSection.style.display = 'none';
+    };
+    navAbout.onclick = function() {
+      navAbout.classList.add('active');
+      navDetector.classList.remove('active');
+      detectorSection.style.display = 'none';
+      aboutSection.style.display = '';
+    };
+
+    // Detector logic
+    const fileInput = document.getElementById('image-upload');
+    const fileName = document.getElementById('file-name');
+    const detectBtn = document.getElementById('detect-btn');
+    const loader = document.getElementById('loader');
+    const results = document.getElementById('results');
+    const originalImg = document.getElementById('original-img');
+    const detectedImg = document.getElementById('detected-img');
+    const downloadBtn = document.getElementById('download-btn');
+
+    let selectedFile = null;
+    let detectedImageUrl = null;
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file && /\.(jpe?g|png)$/i.test(file.name)) {
+        fileName.textContent = file.name;
+        detectBtn.disabled = false;
+        selectedFile = file;
+      } else {
+        fileName.textContent = 'Please select a valid image file (.jpg, .jpeg, .png)';
+        detectBtn.disabled = true;
+        selectedFile = null;
+      }
+    });
+
+    detectBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+      loader.style.display = 'block';
+      detectBtn.disabled = true;
+      results.style.display = 'none';
+      downloadBtn.style.display = 'none';
+
+      // Show original image preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        originalImg.src = e.target.result;
+      };
+      reader.readAsDataURL(selectedFile);
+
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+
+      // Call backend API (update URL as needed)
+      try {
+        const response = await fetch('/detect', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) throw new Error('Detection failed');
+        const data = await response.json();
+        detectedImg.src = data.detected_image_url; // URL or base64 string
+        detectedImageUrl = data.detected_image_url;
+        results.style.display = 'block';
+        downloadBtn.style.display = 'inline-block';
+      } catch (err) {
+        alert('Detection failed: ' + err.message);
+      } finally {
+        loader.style.display = 'none';
+        detectBtn.disabled = false;
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!detectedImageUrl) return;
+      const a = document.createElement('a');
+      a.href = detectedImageUrl;
+      a.download = 'annotated_image.png';
+      a.click();
+    });
+  </script>
+</body>
+</html> 
